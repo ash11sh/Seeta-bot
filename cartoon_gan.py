@@ -22,9 +22,9 @@ def preprocess_image(image, target_dim=224):
   short_dim = min(shape)
   scale = target_dim / short_dim
   new_shape = tf.cast(shape * scale, tf.int32)
-  image = tf.image.resize(image, new_shape)
+  image = tf.image.resize(image, (target_dim,target_dim))
   # Central crop the image.
-  image = tf.image.resize_with_crop_or_pad(image, target_dim, target_dim)
+  # image = tf.image.resize_with_crop_or_pad(image, target_dim, target_dim)
   return image
 
 
@@ -33,7 +33,7 @@ def preprocess_image(image, target_dim=224):
 def cartoon_model(source_image):
   model_type = "float16" 
   source_image = load_img(source_image)
-  
+  base_shape = tf.shape(source_image)
   preprocessed_source_image = preprocess_image(source_image, target_dim=224) 
 
   interpreter = tf.lite.Interpreter(model_path=model_file)
@@ -46,6 +46,7 @@ def cartoon_model(source_image):
   raw_prediction = interpreter.tensor(interpreter.get_output_details()[0]['index'])()
   output = (np.squeeze(raw_prediction)+1.0)*127.5
   output = np.clip(output, 0, 255).astype(np.uint8)
+  output = cv2.resize(output, (base_shape[2],base_shape[1]))
   image=Image.fromarray(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
   bio = BytesIO()
   bio.name = 'cartoongan.jpg'

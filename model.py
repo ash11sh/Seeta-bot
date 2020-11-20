@@ -28,11 +28,10 @@ def preprocess_image(image, target_dim):
   short_dim = min(shape)
   scale = target_dim / short_dim
   new_shape = tf.cast(shape * scale, tf.int32)
-  image = tf.image.resize(image, new_shape)
+  image = tf.image.resize(image, (target_dim,target_dim))
 
   # Central crop the image.
-  image = tf.image.resize_with_crop_or_pad(image, target_dim, target_dim)
-
+  # image = tf.image.resize_with_crop_or_pad(image, target_dim, target_dim)
   return image
 
 
@@ -88,6 +87,7 @@ def styling(content_path,style_path):
   preprocessed_content_image = preprocess_image(content_image, 384)
   preprocessed_style_image = preprocess_image(style_image, 256)
 
+  base_shape = tf.shape(content_image) #shape of cont-img
 
   # Calculate style bottleneck for the preprocessed style image.
   style_bottleneck = run_style_predict(preprocessed_style_image)
@@ -115,6 +115,7 @@ def styling(content_path,style_path):
 
 
   im_save = 'image.jpg'
+  image = tf.image.resize(image, (base_shape[1],base_shape[2]))
   tf.keras.preprocessing.image.save_img(im_save, image)
   imager = Image.open(im_save)
   bio = BytesIO()
